@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
-import bcrypt from "bcryptjs";
+import { hashPassword } from "better-auth/crypto";
 import { classifyStockStatus, computeSupplierScore } from "../lib/derived";
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
@@ -10,13 +10,23 @@ async function main() {
     console.log("Seeding Chase Value data...");
 
     // ── Manager user ──────────────────────────
-    const passwordHash = await bcrypt.hash("ChaseValue123!", 10);
+    // ── Manager user (Better Auth: user + linked credential account) ──
     const manager = await prisma.user.create({
         data: {
             name: "Alex Morgan",
             email: "alex.morgan@chasevalue.com",
-            passwordHash,
+            emailVerified: true,
             role: "MANAGER",
+        },
+    });
+
+    const passwordHash = await hashPassword("chasevalue123");
+    await prisma.account.create({
+        data: {
+            userId: manager.id,
+            accountId: manager.id,
+            providerId: "credential",
+            password: passwordHash,
         },
     });
 
