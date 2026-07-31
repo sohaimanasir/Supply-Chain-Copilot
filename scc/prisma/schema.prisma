@@ -1,13 +1,140 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+enum Role {
+  MANAGER // combined Supply Chain / Procurement Manager — single role for demo
+}
+
+enum StockStatus {
+  HEALTHY
+  LOW
+  CRITICAL
+}
+
+enum PoStatus {
+  DRAFT
+  APPROVED
+  ISSUED
+}
+
+enum ActionType {
+  PO_DRAFTED
+  PO_APPROVED
+  SCORECARD_GENERATED
+  CHAT_QUERY
+}
+
+// ─────────────────────────────────────────────
+// Core entities
+// ─────────────────────────────────────────────
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(MANAGER)
+  createdAt    DateTime @default(now())
+
+  purchaseOrdersCreated  PurchaseOrder[] @relation("CreatedBy")
+  purchaseOrdersApproved PurchaseOrder[] @relation("ApprovedBy")
+  auditLogEntries        AuditLogEntry[]
+}
+
+model InventoryItem {
+  id               String      @id @default(cuid())
+  name             String
+  code             String      @unique // SKU code
+  quantityOnHand   Int
+  reorderThreshold Int
+  unitCost         Decimal     @db.Decimal(10, 2)
+  status           StockStatus @default(HEALTHY) // derived on write, see plan §3
+
+  purchaseOrderLines PurchaseOrderLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+model Supplier {
+  id            String  @id @default(cuid())
+  name          String
+  contactEmail  String
+  contactPhone  String?
+  contractTerms String? @db.Text
+
+  // Deterministic scorecard inputs
+  onTimeDeliveryPct Decimal @db.Decimal(5, 2) // 0–100
+  orderAccuracyPct  Decimal @db.Decimal(5, 2) // 0–100
+  qualityScorePct   Decimal @db.Decimal(5, 2) // 0–100
+  responsivenessPct Decimal @db.Decimal(5, 2) // 0–100
+
+  computedScore  Decimal  @db.Decimal(5, 2) // derived, never AI-set
+  scoreUpdatedAt DateTime @default(now())
+
+  purchaseOrders PurchaseOrder[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PurchaseOrder {
+  id            String   @id @default(cuid())
+  supplierId    String
+  supplier      Supplier @relation(fields: [supplierId], references: [id])
+  status        PoStatus @default(DRAFT)
+  aiGenerated   Boolean  @default(true) // false only if manually created (not built in MVP UI, but modeled)
+  estimatedCost Decimal  @db.Decimal(10, 2)
+
+  createdById String
+  createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
+
+  approvedById String?
+  approvedBy   User?     @relation("ApprovedBy", fields: [approvedById], references: [id])
+  approvedAt   DateTime?
+
+  lines PurchaseOrderLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+model PurchaseOrderLine {
+  id              String        @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantity        Int
+  unitCost        Decimal       @db.Decimal(10, 2) // snapshot at draft time — not a live FK to InventoryItem.unitCost
+}
+
+// ─────────────────────────────────────────────
+// Audit
+// ─────────────────────────────────────────────
+model AuditLogEntry {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id])
+  actionType    ActionType
+  aiInvolved    Boolean    @default(true)
+  recordType    String     // "PurchaseOrder" | "InventoryItem" | "Supplier"
+  recordId      String
+  inputSummary  String     @db.Text // prompt / triggering context
+  outputSummary String     @db.Text // what the AI produced or what action occurred
+  createdAt     DateTime   @default(now())
+
+  @@index([recordType, recordId])
+  @@index([createdAt])
 }
