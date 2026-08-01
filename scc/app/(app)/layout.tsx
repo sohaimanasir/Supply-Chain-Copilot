@@ -10,6 +10,7 @@ const NAV_ITEMS = [
     { label: "Suppliers", href: "/suppliers" },
     { label: "Purchase Orders", href: "/purchase-orders" },
     { label: "Copilot", href: "/copilot" },
+    { label: "Import", href: "/import" },
 ];
 
 export default async function AppLayout({
