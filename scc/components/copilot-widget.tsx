@@ -12,6 +12,7 @@ export function CopilotWidget() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
+    const [slowResponse, setSlowResponse] = useState(false);
 
     async function handleSend() {
         if (!input.trim()) return;
@@ -19,15 +20,31 @@ export function CopilotWidget() {
         setMessages((prev) => [...prev, userMessage]);
         setInput("");
         setSending(true);
+        setSlowResponse(false);
 
-        const res = await fetch("/api/copilot/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: userMessage.content }),
-        });
-        const data = await res.json();
-        setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
-        setSending(false);
+        const slowTimer = setTimeout(() => setSlowResponse(true), 2000);
+
+        try {
+            const res = await fetch("/api/copilot/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: userMessage.content }),
+            });
+            const data = await res.json();
+            setMessages((prev) => [
+                ...prev,
+                { role: "assistant", content: data.reply ?? "Sorry, something went wrong. Please try again." },
+            ]);
+        } catch {
+            setMessages((prev) => [
+                ...prev,
+                { role: "assistant", content: "Sorry, something went wrong. Please try again." },
+            ]);
+        } finally {
+            clearTimeout(slowTimer);
+            setSending(false);
+            setSlowResponse(false);
+        }
     }
 
     function expandToFullPage() {
@@ -73,7 +90,11 @@ export function CopilotWidget() {
                                 <ChatMessageContent content={m.content} />
                             </div>
                         ))}
-                        {sending && <div className="text-text-muted text-sm">Thinking...</div>}
+                        {sending && (
+                            <div className="text-text-muted text-sm">
+                                {slowResponse ? "Still working on it — this is taking longer than usual..." : "Thinking..."}
+                            </div>
+                        )}
                     </div>
                     <div className="p-3 border-t border-line-700 flex gap-2">
                         <input

@@ -36,7 +36,7 @@ async function main() {
         { name: "Blue Harbor Apparel Distribution", contactEmail: "orders@blueharborapparel.com", onTimeDeliveryPct: 81.0, orderAccuracyPct: 89.5, qualityScorePct: 90.0, responsivenessPct: 76.0 },
         { name: "Crestline Electronics Supply", contactEmail: "b2b@crestlinesupply.com", onTimeDeliveryPct: 97.2, orderAccuracyPct: 95.0, qualityScorePct: 96.5, responsivenessPct: 93.0 },
         { name: "Summit Personal Care Wholesale", contactEmail: "accounts@summitpcw.com", onTimeDeliveryPct: 88.0, orderAccuracyPct: 91.0, qualityScorePct: 85.5, responsivenessPct: 82.0 },
-        { name: "Ridgeline Seasonal & Gifting", contactEmail: "wholesale@ridgelineseasonal.com", onTimeDeliveryPct: 72.5, orderAccuracyPct: 80.0, qualityScorePct: 78.0, responsivenessPct: 65.0 },
+        { name: "Ridgeline Seasonal & Gifting", contactEmail: "wholesale@ridgelineseasonal.com", onTimeDeliveryPct: 58.0, orderAccuracyPct: 80.0, qualityScorePct: 78.0, responsivenessPct: 65.0 },
         { name: "Pacific Pantry Foods Distribution", contactEmail: "orders@pacificpantry.com", onTimeDeliveryPct: 91.0, orderAccuracyPct: 93.5, qualityScorePct: 89.0, responsivenessPct: 90.0 },
     ];
 

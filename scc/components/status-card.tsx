@@ -20,7 +20,7 @@ export function StatusCard({
 }) {
     return (
         <div
-            className={`bg-ink-700 border border-line-700 border-l-4 ${RAIL_COLOR_MAP[rail]} rounded-md p-4 ${className}`}
+            className={`bg-ink-700 border border-line-700 border-l-4 ${RAIL_COLOR_MAP[rail]} rounded-md p-4 transition-colors hover:border-brand-cobalt/50 ${className}`}
         >
             {children}
         </div>
