@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { CopilotWidgetGate } from "@/components/copilot-widget-gate";
 
 const NAV_ITEMS = [
     { label: "Dashboard", href: "/dashboard" },
@@ -46,6 +47,7 @@ export default async function AppLayout({
                 </div>
             </aside>
             <main className="flex-1 p-6 bg-ink-900">{children}</main>
+            <CopilotWidgetGate />
         </div>
     );
 }

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { StatusTag } from "@/components/status-tag";
 import { StatusCard } from "@/components/status-card";
 
+
 type Supplier = {
     id: string;
     name: string;
@@ -30,6 +31,8 @@ export default function SupplierDetailPage() {
     const { id } = useParams<{ id: string }>();
     const router = useRouter();
     const [supplier, setSupplier] = useState<Supplier | null>(null);
+    const [narrative, setNarrative] = useState<string | null>(null);
+    const [loadingNarrative, setLoadingNarrative] = useState(false);
 
     useEffect(() => {
         fetch(`/api/suppliers/${id}`)
@@ -77,6 +80,27 @@ export default function SupplierDetailPage() {
                         <div>Quality: {supplier.qualityScorePct}%</div>
                         <div>Responsiveness: {supplier.responsivenessPct}%</div>
                     </div>
+                </div>
+
+                <div className="border-t border-line-700 pt-3 mt-3">
+                    <div className="text-sm font-medium mb-2">AI Narrative</div>
+                    {narrative ? (
+                        <p className="text-sm text-text-muted">{narrative}</p>
+                    ) : (
+                        <button
+                            onClick={async () => {
+                                setLoadingNarrative(true);
+                                const res = await fetch(`/api/suppliers/${id}/narrative`);
+                                const data = await res.json();
+                                setNarrative(data.narrative);
+                                setLoadingNarrative(false);
+                            }}
+                            disabled={loadingNarrative}
+                            className="border border-line-700 text-text-primary px-3 py-1.5 rounded text-sm hover:border-brand-cobalt"
+                        >
+                            {loadingNarrative ? "Generating..." : "Explain this score"}
+                        </button>
+                    )}
                 </div>
             </StatusCard>
         </div>

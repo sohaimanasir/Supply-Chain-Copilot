@@ -25,6 +25,7 @@ export default function InventoryDetailPage() {
     const [quantityOnHand, setQuantityOnHand] = useState(0);
     const [reorderThreshold, setReorderThreshold] = useState(0);
     const [saving, setSaving] = useState(false);
+    const [drafting, setDrafting] = useState(false);
 
     useEffect(() => {
         fetch(`/api/inventory/${id}`)
@@ -98,11 +99,21 @@ export default function InventoryDetailPage() {
                     </button>
                     {(item.status === "LOW" || item.status === "CRITICAL") && (
                         <button
-                            disabled
-                            title="Wired up in Phase 4"
-                            className="border border-line-700 text-text-muted px-4 py-2 rounded text-sm cursor-not-allowed"
+                            onClick={async () => {
+                                setDrafting(true);
+                                const res = await fetch(`/api/inventory/${id}/draft-po`, { method: "POST" });
+                                const data = await res.json();
+                                setDrafting(false);
+                                if (data.poId) {
+                                    router.push(`/purchase-orders/${data.poId}`);
+                                } else {
+                                    alert(data.error ?? "Failed to draft PO");
+                                }
+                            }}
+                            disabled={drafting}
+                            className="bg-brand-cobalt text-ink-900 px-4 py-2 rounded text-sm font-medium disabled:opacity-50"
                         >
-                            Draft PO with AI
+                            {drafting ? "Drafting..." : "Draft PO with AI"}
                         </button>
                     )}
                 </div>
